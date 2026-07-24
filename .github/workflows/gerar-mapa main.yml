@@ -1,0 +1,59 @@
+name: Gerar Mapa Holográfico S&P 500
+
+# Quando corre:
+#   - manualmente (botão "Run workflow" no separador Actions do GitHub)
+#   - sempre que houver push para main que altere ficheiros .py
+#   - todos os dias às 07:00 UTC (ajusta o cron se quiseres outra hora)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "**.py"
+  schedule:
+    - cron: "0 7 * * *"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descarregar código do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependências
+        run: pip install pandas plotly
+
+      # ATENÇÃO: se os ficheiros fase*.py estiverem numa subpasta (ex: sp500_heatmap/),
+      # muda esta linha para "cd sp500_heatmap && python3 fase4_versao_final.py"
+      - name: Correr a aplicação (gera o HTML em ./dist)
+        run: python3 fase4_versao_final.py
+
+      - name: Preparar artefacto para o GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  publicar:
+    needs: gerar
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
