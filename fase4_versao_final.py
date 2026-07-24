@@ -106,7 +106,15 @@ pagina_final = f"""
 </html>
 """
 
-with open("/home/claude/sp500_heatmap/fase4_output.html", "w", encoding="utf-8") as f:
+import os
+
+# Caminho relativo: cria a pasta 'dist' junto deste script e guarda lá o HTML.
+# Isto funciona tanto localmente como em CI/CD (ex: GitHub Actions).
+pasta_saida = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dist")
+os.makedirs(pasta_saida, exist_ok=True)
+caminho_saida = os.path.join(pasta_saida, "index.html")
+
+with open(caminho_saida, "w", encoding="utf-8") as f:
     f.write(pagina_final)
 
-print("Gráfico da Fase 4 (versão final) guardado em fase4_output.html")
+print(f"Gráfico da Fase 4 (versão final) guardado em {caminho_saida}")
