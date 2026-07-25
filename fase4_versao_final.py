@@ -17,7 +17,23 @@ import plotly.express as px
 from datetime import datetime
 from fase1_dados import DADOS_SP500
 
-df = pd.DataFrame(DADOS_SP500)
+# Tenta obter dados REAIS via yfinance (Fase 5). Se falhar por qualquer
+# motivo (sem rede, rate limit da Yahoo Finance, etc.), usa os dados de
+# amostra da Fase 1 como rede de segurança — o workflow nunca deve falhar
+# só porque a API externa esteve indisponível num dia.
+try:
+    from fase5_dados_reais_yfinance import obter_dados_reais
+    print("A obter dados reais via yfinance...")
+    dados = obter_dados_reais()
+    fonte_dados = f"dados reais · yfinance · {len(dados)} tickers"
+    print(f"OK: {len(dados)} tickers obtidos com sucesso.")
+except Exception as erro:
+    print(f"Aviso: não foi possível obter dados reais ({erro}). "
+          f"A usar dados de amostra.")
+    dados = DADOS_SP500
+    fonte_dados = "dados de amostra (fallback)"
+
+df = pd.DataFrame(dados)
 
 ESCALA_HOLOGRAFICA = [
     [0.0, "#ff00c8"],
@@ -58,7 +74,7 @@ fig.update_layout(
     title=dict(
         text=f"S&P 500 — PERFORMANCE HOLOGRÁFICA<br>"
              f"<span style='font-size:12px;color:#888'>Gerado em "
-             f"{datetime.now().strftime('%d/%m/%Y %H:%M')} · dados de amostra</span>",
+             f"{datetime.now().strftime('%d/%m/%Y %H:%M')} · {fonte_dados}</span>",
         font=dict(color="#00f0ff", family="Orbitron, sans-serif", size=24),
         x=0.01,
     ),
